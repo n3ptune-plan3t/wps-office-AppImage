@@ -25,8 +25,10 @@ if [ -d "/usr/lib/office6/mui/zh_CN" ]; then
     rm -rf "/usr/lib/office6/mui/zh_CN"
 fi
 
-# export ICON="/usr/share/icons/hicolor/scalable/apps/wps-office.svg"
-# export DESKTOP="/usr/share/applications/wps.desktop"
+export ICON="/usr/share/icons/hicolor/scalable/apps/wps-office.svg"
+PRIMARY_DESKTOP=$(ls /usr/share/applications/*.desktop | head -n 1)
+cp "$PRIMARY_DESKTOP" "$APPDIR/"
+export DESKTOP="$APPDIR/$(basename "$PRIMARY_DESKTOP")"
 
 # Deploy dependencies
 quick-sharun /usr/bin/wps
