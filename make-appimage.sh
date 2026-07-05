@@ -26,7 +26,7 @@ if [ -d "/usr/lib/office6/mui/zh_CN" ]; then
 fi
 
 export ICON="/usr/share/icons/hicolor/scalable/apps/wps-office.svg"
-export DESKTOP="/usr/share/applications/wps-office.desktop"
+export DESKTOP="/usr/share/applications/wps.desktop"
 
 # Deploy dependencies
 quick-sharun /usr/bin/wps
