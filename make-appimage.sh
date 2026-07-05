@@ -5,9 +5,7 @@ set -eu
 ARCH=$(uname -m)
 VERSION=$(pacman -Q wps-office-cn | awk '{print $2; exit}') # example command to get version of application here
 export ARCH VERSION
-export APPDIR="./AppDir"
 export OUTPATH=./dist
-mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/lib" "$OUTPATH"
 #export ADD_HOOKS="self-updater.hook"
 export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}|latest|*$ARCH.AppImage.zsync"
 
@@ -25,12 +23,19 @@ if [ -d "/usr/lib/office6/mui/zh_CN" ]; then
     rm -rf "/usr/lib/office6/mui/zh_CN"
 fi
 
+# Handle icon - ensure it's not copied to itself
 PRIMARY_ICON=$(ls /usr/share/icons/hicolor/scalable/apps/*.svg | head -n 1)
-cp "$PRIMARY_ICON" "$APPDIR/"
-export ICON="$APPDIR/$(basename "$PRIMARY_ICON")"
+ICON_NAME="$(basename "$PRIMARY_ICON")"
+if [ -f "/usr/share/icons/hicolor/scalable/apps/$ICON_NAME" ]; then
+    export ICON="$ICON_NAME"
+fi
+
+# Handle desktop file - ensure it's not copied to itself
 PRIMARY_DESKTOP=$(ls /usr/share/applications/*.desktop | head -n 1)
-cp "$PRIMARY_DESKTOP" "$APPDIR/"
-export DESKTOP="$APPDIR/$(basename "$PRIMARY_DESKTOP")"
+DESKTOP_NAME="$(basename "$PRIMARY_DESKTOP")"
+if [ -f "/usr/share/applications/$DESKTOP_NAME" ]; then
+    export DESKTOP="$DESKTOP_NAME"
+fi
 
 # Deploy dependencies
 quick-sharun /usr/bin/wps
