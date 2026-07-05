@@ -24,14 +24,14 @@ if [ -d "/usr/lib/office6/mui/zh_CN" ]; then
 fi
 
 # Handle icon - ensure it's not copied to itself
-PRIMARY_ICON=$(ls /usr/share/icons/hicolor/scalable/apps/wps*.svg | head -n 1)
+PRIMARY_ICON=$(ls /usr/share/icons/hicolor/scalable/apps/wps-office*.svg | head -n 1)
 ICON_NAME="$(basename "$PRIMARY_ICON")"
 if [ -f "/usr/share/icons/hicolor/scalable/apps/$ICON_NAME" ]; then
     export ICON="$ICON_NAME"
 fi
 
 # Handle desktop file - ensure it's not copied to itself
-PRIMARY_DESKTOP=$(ls /usr/share/applications/wps*.desktop | head -n 1)
+PRIMARY_DESKTOP=$(ls /usr/share/applications/wps-office*.desktop | head -n 1)
 DESKTOP_NAME="$(basename "$PRIMARY_DESKTOP")"
 if [ -f "/usr/share/applications/$DESKTOP_NAME" ]; then
     export DESKTOP="$DESKTOP_NAME"
@@ -39,8 +39,9 @@ fi
 
 # Deploy dependencies
 quick-sharun /usr/bin/wps
-quick-sharun /usr/bin/et
-quick-sharun /usr/bin/wpp
+quick-sharun /usr/bin/wps-office-et
+quick-sharun /usr/bin/wps-office-wpp
+quick-sharun /usr/bin/wps-office-wpspdf
 
 # Additional changes can be done in between here
 
