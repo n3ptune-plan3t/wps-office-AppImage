@@ -1,5 +1,34 @@
 <div align="center">
 
+# WPS Office AppImage
+
+[![GitHub Downloads](https://img.shields.io/github/downloads/anomalyco/wps-office-AppImage/total?logo=github&label=GitHub%20Downloads)](https://github.com/anomalyco/wps-office-AppImage/releases/latest)
+[![CI Build Status](https://github.com/anomalyco/wps-office-AppImage/actions/workflows/appimage.yml/badge.svg)](https://github.com/anomalyco/wps-office-AppImage/releases/latest)
+[![Latest Stable Release](https://img.shields.io/github/v/release/anomalyco/wps-office-AppImage)](https://github.com/anomalyco/wps-office-AppImage/releases/latest)
+
+| Latest Stable Release | Upstream URL |
+| :---: | :---: |
+| [Click here](https://github.com/anomalyco/wps-office-AppImage/releases/latest) | [Click here](https://www.wps.com/) |
+
+</div>
+
+---
+
+Portable WPS Office AppImage made using [sharun](https://github.com/VHSgunzo/sharun) and its wrapper [quick-sharun](https://github.com/pkgforge-dev/Anylinux-AppImages/blob/main/useful-tools/quick-sharun.sh).
+
+**This AppImage bundles everything and it should work on any Linux distro, including old and musl-based ones.**
+
+This AppImage doesn't require FUSE to run at all, thanks to the [uruntime](https://github.com/VHSgunzo/uruntime).
+
+This AppImage is also supplied with a self-updater by default, so any updates to this application won't be missed, you will be prompted for permission to check for updates and if agreed you will then be notified when a new update is available.
+
+Self-updater is disabled by default if AppImage managers like [am](https://github.com/ivan-hc/AM), [soar](https://github.com/pkgforge/soar) or [dbin](https://github.com/xplshn/dbin) exist, which manage AppImage updates.
+
+---
+
+More at: [AnyLinux-AppImages](https://pkgforge-dev.github.io/Anylinux-AppImages/)
+<div align="center">
+
 # TEMPLATE-AppImage 🐧
 
 [![GitHub Downloads](https://img.shields.io/github/downloads/pkgforge-dev/TEMPLATE-AppImage/total?logo=github&label=GitHub%20Downloads)](https://github.com/pkgforge-dev/TEMPLATE-AppImage/releases/latest)
