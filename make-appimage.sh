@@ -53,7 +53,9 @@ chmod -x "$APPDIR/usr/lib/office6/wpscloudsvr" 2>/dev/null || true
 chmod -x "$APPDIR/usr/lib/office6/wpsoffice" 2>/dev/null || true
 
 # Create wrapper scripts that call the real office6 binaries directly
+# Must rm the sharun hardlink first (bin/* are hardlinks to sharun/AppRun)
 for bin in wps et wpp wpspdf; do
+  rm -f "$APPDIR/bin/$bin"
   cat > "$APPDIR/bin/$bin" << 'WRAPPER'
 #!/bin/sh
 APPDIR="${APPDIR:-$(dirname "$(dirname "$(readlink -f "$0")")")}"
