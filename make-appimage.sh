@@ -34,7 +34,7 @@ if [ -n "$PRIMARY_DESKTOP" ] && [ -f "$PRIMARY_DESKTOP" ]; then
     export DESKTOP="$PRIMARY_DESKTOP"
 fi
 
-# Deploy real office6 binaries (/usr/bin/ stubs are 0-byte placeholders)
+# Deploy office6 ELF binaries for library dependency resolution only
 quick-sharun \
   /usr/lib/office6/wps \
   /usr/lib/office6/et \
@@ -52,18 +52,19 @@ cp -a /usr/lib/office6 "$APPDIR/usr/lib/office6"
 chmod -x "$APPDIR/usr/lib/office6/wpscloudsvr" 2>/dev/null || true
 chmod -x "$APPDIR/usr/lib/office6/wpsoffice" 2>/dev/null || true
 
-# Create wrapper scripts that call the real office6 binaries directly
-# Must rm the sharun hardlink first (bin/* are hardlinks to sharun/AppRun)
+# Deploy WPS launcher scripts from /usr/bin/ (they contain env setup like
+# gApp, gOptExt, etc.) and patch them to find office6 inside the AppDir
 for bin in wps et wpp wpspdf; do
   rm -f "$APPDIR/bin/$bin"
-  cat > "$APPDIR/bin/$bin" << 'WRAPPER'
-#!/bin/sh
-APPDIR="${APPDIR:-$(dirname "$(dirname "$(readlink -f "$0")")")}"
-export LD_LIBRARY_PATH="$APPDIR/usr/lib/office6${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-exec "$APPDIR/usr/lib/office6/$(basename "$0")" "$@"
-WRAPPER
+  cp /usr/bin/"$bin" "$APPDIR/bin/$bin"
   chmod +x "$APPDIR/bin/$bin"
+  # Replace hardcoded /usr/lib/office6 with AppDir-relative path
+  sed -i "s|/usr/lib/office6|\${APPDIR}/usr/lib/office6|g" "$APPDIR/bin/$bin"
 done
+
+# Rename Name= in the primary desktop file so the AppImage is named
+# WPS_Office instead of WPS_Writer (all components are bundled)
+sed -i 's/^Name=.*/Name=WPS Office/' "$APPDIR"/*.desktop
 
 # Copy all desktop files for desktop integration
 mkdir -p "$APPDIR/usr/share/applications"
