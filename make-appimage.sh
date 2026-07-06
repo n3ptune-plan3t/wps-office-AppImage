@@ -45,6 +45,7 @@ quick-sharun \
   /usr/lib/office6/transerr
 
 # Copy entire office6 tree into AppDir (resources, bundled libs, etc.)
+mkdir -p "$APPDIR/usr/lib"
 cp -a /usr/lib/office6 "$APPDIR/usr/lib/office6"
 
 # Disable background processes to prevent shutdown crashes
