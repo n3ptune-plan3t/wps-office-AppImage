@@ -18,7 +18,7 @@ chmod -x /usr/lib/office6/wpsoffice
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-# Handle icon - prefer large PNG icon from mimetypes or apps dirs
+# Handle icon
 PRIMARY_ICON=$(ls /usr/share/icons/hicolor/256x256/mimetypes/wps-office2019-wpsmain.png 2>/dev/null | head -n 1)
 if [ -z "$PRIMARY_ICON" ]; then
     PRIMARY_ICON=$(ls /usr/share/icons/hicolor/*/apps/wps-office-kingsoft.png 2>/dev/null | head -n 1)
@@ -26,18 +26,17 @@ fi
 if [ -z "$PRIMARY_ICON" ]; then
     PRIMARY_ICON=$(ls /usr/share/icons/hicolor/*/apps/wps-office*.png 2>/dev/null | head -n 1)
 fi
-if [ -n "$PRIMARY_ICON" ]; then
+if [ -n "$PRIMARY_ICON" ] && [ -f "$PRIMARY_ICON" ]; then
     export ICON="$PRIMARY_ICON"
 fi
 
-# Handle desktop file - ensure it's not copied to itself
+# Handle desktop file - use full path
 PRIMARY_DESKTOP=$(ls /usr/share/applications/wps-office-wps.desktop 2>/dev/null | head -n 1)
 if [ -z "$PRIMARY_DESKTOP" ]; then
     PRIMARY_DESKTOP=$(ls /usr/share/applications/wps-office*.desktop 2>/dev/null | head -n 1)
 fi
-DESKTOP_NAME="$(basename "$PRIMARY_DESKTOP")"
-if [ -f "/usr/share/applications/$DESKTOP_NAME" ]; then
-    export DESKTOP="$DESKTOP_NAME"
+if [ -n "$PRIMARY_DESKTOP" ] && [ -f "$PRIMARY_DESKTOP" ]; then
+    export DESKTOP="$PRIMARY_DESKTOP"
 fi
 
 # Deploy dependencies
