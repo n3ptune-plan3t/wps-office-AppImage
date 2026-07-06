@@ -3,7 +3,7 @@
 set -eu
 
 ARCH=$(uname -m)
-VERSION=$(pacman -Q wps-office-cn | awk '{print $2; exit}') # example command to get version of application here
+VERSION=$(pacman -Q wps-office | awk '{print $2; exit}') # example command to get version of application here
 export ARCH VERSION
 export OUTPATH=./dist
 #export ADD_HOOKS="self-updater.hook"
@@ -14,24 +14,27 @@ echo "Applying post-install fixes..."
 chmod -x /usr/lib/office6/wpscloudsvr
 chmod -x /usr/lib/office6/wpsoffice
 
-# Force English environment and strip Chinese resources
+# Force English environment
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
-# Remove Chinese language files to ensure English fallback
-if [ -d "/usr/lib/office6/mui/zh_CN" ]; then
-    rm -rf "/usr/lib/office6/mui/zh_CN"
+# Handle icon - prefer large PNG icon from mimetypes or apps dirs
+PRIMARY_ICON=$(ls /usr/share/icons/hicolor/256x256/mimetypes/wps-office2019-wpsmain.png 2>/dev/null | head -n 1)
+if [ -z "$PRIMARY_ICON" ]; then
+    PRIMARY_ICON=$(ls /usr/share/icons/hicolor/*/apps/wps-office-kingsoft.png 2>/dev/null | head -n 1)
 fi
-
-# Handle icon - ensure it's not copied to itself
-PRIMARY_ICON=$(ls /usr/share/icons/hicolor/scalable/apps/wps-office*.svg | head -n 1)
-ICON_NAME="$(basename "$PRIMARY_ICON")"
-if [ -f "/usr/share/icons/hicolor/scalable/apps/$ICON_NAME" ]; then
-    export ICON="$ICON_NAME"
+if [ -z "$PRIMARY_ICON" ]; then
+    PRIMARY_ICON=$(ls /usr/share/icons/hicolor/*/apps/wps-office*.png 2>/dev/null | head -n 1)
+fi
+if [ -n "$PRIMARY_ICON" ]; then
+    export ICON="$PRIMARY_ICON"
 fi
 
 # Handle desktop file - ensure it's not copied to itself
-PRIMARY_DESKTOP=$(ls /usr/share/applications/wps-office*.desktop | head -n 1)
+PRIMARY_DESKTOP=$(ls /usr/share/applications/wps-office-wps.desktop 2>/dev/null | head -n 1)
+if [ -z "$PRIMARY_DESKTOP" ]; then
+    PRIMARY_DESKTOP=$(ls /usr/share/applications/wps-office*.desktop 2>/dev/null | head -n 1)
+fi
 DESKTOP_NAME="$(basename "$PRIMARY_DESKTOP")"
 if [ -f "/usr/share/applications/$DESKTOP_NAME" ]; then
     export DESKTOP="$DESKTOP_NAME"
@@ -39,9 +42,12 @@ fi
 
 # Deploy dependencies
 quick-sharun /usr/bin/wps
-quick-sharun /usr/bin/wps-office-et
-quick-sharun /usr/bin/wps-office-wpp
-quick-sharun /usr/bin/wps-office-wpspdf
+quick-sharun /usr/bin/et
+quick-sharun /usr/bin/wpp
+quick-sharun /usr/bin/wpspdf
+quick-sharun /usr/lib/office6/wpsd
+quick-sharun /usr/lib/office6/promecefpluginhost
+quick-sharun /usr/lib/office6/transerr
 
 # Additional changes can be done in between here
 
