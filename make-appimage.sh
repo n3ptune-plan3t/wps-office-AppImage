@@ -88,14 +88,15 @@ for component in wps et wpp wpspdf; do
         export ICON="$ICON_SRC"
     fi
 
-    # Write minimal wrapper (bypasses WPS launcher scripts; the ELF binaries
-    # resolve their own resources relative to their executable path).
-    cat > "$COMPONENT_APPDIR/bin/$component" <<WRAPPER
-#!/bin/sh
-APPDIR="\$(dirname "\$(dirname "\$(readlink -f "\$0")")")"
-exec "\${APPDIR}/usr/lib/office6/${component}" "\$@"
-WRAPPER
+    # Deploy original WPS launcher script and patch gInstallPath to the
+    # AppDir-relative path.  This preserves all the argument handling,
+    # URL decoding, template detection etc. that the scripts provide.
+    rm -f "$COMPONENT_APPDIR/bin/$component"
+    cp "/usr/bin/$component" "$COMPONENT_APPDIR/bin/$component"
     chmod +x "$COMPONENT_APPDIR/bin/$component"
+    sed -i '2i APPDIR="$(dirname "$(dirname "$(readlink -f "$0")")")"' "$COMPONENT_APPDIR/bin/$component"
+    sed -i '/gInstallPath=\/usr\/lib$/s|gInstallPath=/usr/lib|gInstallPath="${APPDIR}"/usr/lib|' "$COMPONENT_APPDIR/bin/$component"
+    sed -i '/gInstallPath=\/opt\/kingsoft\/wps-office$/s|gInstallPath=/opt/kingsoft/wps-office|gInstallPath="${APPDIR}"/usr/lib|' "$COMPONENT_APPDIR/bin/$component"
 
     # Build AppImage
     export APPDIR="$COMPONENT_APPDIR"
