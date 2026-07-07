@@ -12,6 +12,16 @@ export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 
+# quick-sharun deploy needs a .desktop file in $APPDIR/
+# Put a placeholder now; the component loop replaces it per-AppImage.
+mkdir -p "$APPDIR"
+cp /usr/share/applications/wps-office-wps.desktop "$APPDIR/"
+export DESKTOP="$APPDIR/wps-office-wps.desktop"
+ICON_SRC=$(ls /usr/share/icons/hicolor/*/apps/wps-office-wps.png 2>/dev/null | head -n 1)
+if [ -n "$ICON_SRC" ]; then
+    export ICON="$ICON_SRC"
+fi
+
 # Deploy office6 ELF binaries for library dependency resolution only
 quick-sharun \
   /usr/lib/office6/wps \
@@ -62,6 +72,7 @@ for component in wps et wpp wpspdf; do
     # Set primary desktop file for this component
     DESKTOP_SRC="/usr/share/applications/wps-office-${component}.desktop"
     if [ -f "$DESKTOP_SRC" ]; then
+        rm -f "$COMPONENT_APPDIR"/*.desktop  # remove placeholder from base
         cp "$DESKTOP_SRC" "$COMPONENT_APPDIR/"
         sed -i "s/^Name=.*/Name=${name}/" "$COMPONENT_APPDIR/wps-office-${component}.desktop"
         export DESKTOP="$COMPONENT_APPDIR/wps-office-${component}.desktop"
