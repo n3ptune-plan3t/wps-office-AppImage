@@ -6,33 +6,11 @@ ARCH=$(uname -m)
 VERSION=$(pacman -Q wps-office | awk '{print $2; exit}')
 export ARCH VERSION
 export OUTPATH=./dist
-export APPDIR="${APPDIR:-$PWD/AppDir}"
 export UPINFO="gh-releases-zsync|${GITHUB_REPOSITORY%/*}|${GITHUB_REPOSITORY#*/}|latest|*$ARCH.AppImage.zsync"
 
 # Force English environment
 export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
-
-# Handle icon (must be before quick-sharun, which calls _get_icon)
-PRIMARY_ICON=$(ls /usr/share/icons/hicolor/256x256/mimetypes/wps-office2019-wpsmain.png 2>/dev/null | head -n 1)
-if [ -z "$PRIMARY_ICON" ]; then
-    PRIMARY_ICON=$(ls /usr/share/icons/hicolor/*/apps/wps-office-kingsoft.png 2>/dev/null | head -n 1)
-fi
-if [ -z "$PRIMARY_ICON" ]; then
-    PRIMARY_ICON=$(ls /usr/share/icons/hicolor/*/apps/wps-office*.png 2>/dev/null | head -n 1)
-fi
-if [ -n "$PRIMARY_ICON" ] && [ -f "$PRIMARY_ICON" ]; then
-    export ICON="$PRIMARY_ICON"
-fi
-
-# Handle desktop file (must be before quick-sharun, which calls _get_desktop)
-PRIMARY_DESKTOP=$(ls /usr/share/applications/wps-office-wps.desktop 2>/dev/null | head -n 1)
-if [ -z "$PRIMARY_DESKTOP" ]; then
-    PRIMARY_DESKTOP=$(ls /usr/share/applications/wps-office*.desktop 2>/dev/null | head -n 1)
-fi
-if [ -n "$PRIMARY_DESKTOP" ] && [ -f "$PRIMARY_DESKTOP" ]; then
-    export DESKTOP="$PRIMARY_DESKTOP"
-fi
 
 # Deploy office6 ELF binaries for library dependency resolution only
 quick-sharun \
@@ -52,21 +30,7 @@ cp -a /usr/lib/office6 "$APPDIR/usr/lib/office6"
 chmod -x "$APPDIR/usr/lib/office6/wpscloudsvr" 2>/dev/null || true
 chmod -x "$APPDIR/usr/lib/office6/wpsoffice" 2>/dev/null || true
 
-# Deploy WPS launcher scripts from /usr/bin/ (they contain env setup like
-# gApp, gOptExt, etc.) and patch them to find office6 inside the AppDir
-for bin in wps et wpp wpspdf; do
-  rm -f "$APPDIR/bin/$bin"
-  cp /usr/bin/"$bin" "$APPDIR/bin/$bin"
-  chmod +x "$APPDIR/bin/$bin"
-  # Replace hardcoded /usr/lib/office6 with AppDir-relative path
-  sed -i "s|/usr/lib/office6|\${APPDIR}/usr/lib/office6|g" "$APPDIR/bin/$bin"
-done
-
-# Rename Name= in the primary desktop file so the AppImage is named
-# WPS_Office instead of WPS_Writer (all components are bundled)
-sed -i 's/^Name=.*/Name=WPS Office/' "$APPDIR"/*.desktop
-
-# Copy all desktop files for desktop integration
+# Copy all desktop files
 mkdir -p "$APPDIR/usr/share/applications"
 cp /usr/share/applications/wps-office-*.desktop "$APPDIR/usr/share/applications/" 2>/dev/null || true
 
@@ -76,8 +40,59 @@ if [ -d /usr/share/icons/hicolor ]; then
     cp -a /usr/share/icons/hicolor "$APPDIR/usr/share/icons/"
 fi
 
-# Turn AppDir into AppImage
-quick-sharun --make-appimage
+# Save the base AppDir (shared deps + office6 tree) for reuse
+BASE_APPDIR="${APPDIR}-base"
+rm -rf "$BASE_APPDIR"
+cp -a "$APPDIR" "$BASE_APPDIR"
 
-# Test the app for 12 seconds
-quick-sharun --test ./dist/*.AppImage
+# Build one AppImage per component
+for component in wps et wpp wpspdf; do
+
+    case "$component" in
+        wps)    name="WPS Writer" ;;
+        et)     name="WPS Spreadsheets" ;;
+        wpp)    name="WPS Presentation" ;;
+        wpspdf) name="WPS PDF" ;;
+    esac
+
+    COMPONENT_APPDIR="${APPDIR}-${component}"
+    rm -rf "$COMPONENT_APPDIR"
+    cp -a "$BASE_APPDIR" "$COMPONENT_APPDIR"
+
+    # Set primary desktop file for this component
+    DESKTOP_SRC="/usr/share/applications/wps-office-${component}.desktop"
+    if [ -f "$DESKTOP_SRC" ]; then
+        cp "$DESKTOP_SRC" "$COMPONENT_APPDIR/"
+        sed -i "s/^Name=.*/Name=${name}/" "$COMPONENT_APPDIR/wps-office-${component}.desktop"
+        export DESKTOP="$COMPONENT_APPDIR/wps-office-${component}.desktop"
+    fi
+
+    # Set icon for this component
+    ICON_SRC=$(ls /usr/share/icons/hicolor/*/apps/wps-office-${component}.png 2>/dev/null | head -n 1)
+    if [ -z "$ICON_SRC" ]; then
+        ICON_SRC=$(ls /usr/share/icons/hicolor/*/apps/wps-office-*.png 2>/dev/null | head -n 1)
+    fi
+    if [ -n "$ICON_SRC" ] && [ -f "$ICON_SRC" ]; then
+        export ICON="$ICON_SRC"
+    fi
+
+    # Deploy launcher script (with APPDIR derivation patches)
+    rm -f "$COMPONENT_APPDIR/bin/$component"
+    cp "/usr/bin/$component" "$COMPONENT_APPDIR/bin/$component"
+    chmod +x "$COMPONENT_APPDIR/bin/$component"
+    sed -i '2 i APPDIR="$(dirname "$(dirname "$(readlink -f "$0")")")"' "$COMPONENT_APPDIR/bin/$component"
+    sed -i "s|/usr/lib/office6|\"\${APPDIR}\"/usr/lib/office6|g" "$COMPONENT_APPDIR/bin/$component"
+
+    # Build AppImage
+    export APPDIR="$COMPONENT_APPDIR"
+    quick-sharun --make-appimage
+
+    # Smoke-test the AppImage (12 seconds)
+    latest=$(ls -t "$OUTPATH"/*.AppImage 2>/dev/null | head -1)
+    if [ -n "$latest" ]; then
+        quick-sharun --test "$latest"
+    fi
+
+done
+
+rm -rf "$BASE_APPDIR"
